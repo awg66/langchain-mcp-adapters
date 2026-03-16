@@ -32,7 +32,9 @@ async def test_stdio_session_expands_env_vars():
 
     with (
         patch("langchain_mcp_adapters.sessions.stdio_client", mock_stdio_client),
-        patch("langchain_mcp_adapters.sessions.ClientSession", return_value=mock_session),
+        patch(
+            "langchain_mcp_adapters.sessions.ClientSession", return_value=mock_session
+        ),
     ):
         async with _create_stdio_session(
             command="npx",
@@ -63,7 +65,9 @@ async def test_stdio_session_env_none_stays_none():
 
     with (
         patch("langchain_mcp_adapters.sessions.stdio_client", mock_stdio_client),
-        patch("langchain_mcp_adapters.sessions.ClientSession", return_value=mock_session),
+        patch(
+            "langchain_mcp_adapters.sessions.ClientSession", return_value=mock_session
+        ),
     ):
         async with _create_stdio_session(command="npx", args=[]):
             pass
