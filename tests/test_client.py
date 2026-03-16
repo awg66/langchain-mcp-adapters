@@ -18,8 +18,9 @@ from tests.utils import IsLangChainID
 
 @pytest.fixture
 def mock_stdio_session() -> Generator[dict, None, None]:
-    """Patch stdio_client and ClientSession, yielding a dict that captures
-    the StdioServerParameters passed to stdio_client.
+    """Patch stdio_client and ClientSession.
+
+    Yields a dict that captures the StdioServerParameters passed to stdio_client.
     """
     captured: dict = {}
 
@@ -58,7 +59,7 @@ async def test_stdio_session_expands_env_vars(monkeypatch, mock_stdio_session):
         pass
 
     resolved_env = mock_stdio_session["server_params"].env
-    assert resolved_env["API_TOKEN"] == "secret123"
+    assert resolved_env["API_TOKEN"] == "secret123"  # noqa: S105
     assert resolved_env["LITERAL"] == "plain"
     assert resolved_env["EMBEDDED"] == "Bearer secret123"
 
@@ -79,6 +80,21 @@ async def test_stdio_session_env_empty_dict_stays_empty(mock_stdio_session):
     assert mock_stdio_session["server_params"].env == {}
 
 
+async def test_stdio_session_bare_dollar_not_expanded(monkeypatch, mock_stdio_session):
+    """Bare $VAR references must NOT be expanded — only ${VAR} is supported."""
+    monkeypatch.setenv("word123", "OOPS")
+
+    async with _create_stdio_session(
+        command="npx",
+        args=["-y", "@some/mcp-server"],
+        env={"DB_PASSWORD": "p@ss$word123"},
+    ):
+        pass
+
+    resolved_env = mock_stdio_session["server_params"].env
+    assert resolved_env["DB_PASSWORD"] == "p@ss$word123"  # noqa: S105
+
+
 async def test_stdio_session_warns_on_undefined_env_var(
     monkeypatch, mock_stdio_session, caplog
 ):
@@ -97,7 +113,7 @@ async def test_stdio_session_warns_on_undefined_env_var(
     # Value should pass through as literal when undefined
     assert (
         mock_stdio_session["server_params"].env["SECRET"]
-        == "${TOTALLY_UNDEFINED_VAR_XYZ}"
+        == "${TOTALLY_UNDEFINED_VAR_XYZ}"  # noqa: S105
     )
 
 
